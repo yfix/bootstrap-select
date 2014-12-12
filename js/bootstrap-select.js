@@ -136,6 +136,7 @@
     dropupAuto: true,
     header: false,
     liveSearch: false,
+    liveSearchPlaceholder: null,
     actionsBox: false,
     iconBase: 'glyphicon',
     tickIcon: 'glyphicon-ok',
@@ -196,20 +197,27 @@
           btnSize = this.$element.parents().hasClass('form-group-lg') ? ' btn-lg' : (this.$element.parents().hasClass('form-group-sm') ? ' btn-sm' : '');
       // Elements
       var header = this.options.header ? '<div class="popover-title"><button type="button" class="close" aria-hidden="true">&times;</button>' + this.options.header + '</div>' : '';
-      var searchbox = this.options.liveSearch ? '<div class="bs-searchbox"><input type="text" class="input-block-level form-control" autocomplete="off" /></div>' : '';
-      var actionsbox = this.options.actionsBox ? '<div class="bs-actionsbox">' +
-      '<div class="btn-group btn-block">' +
-      '<button class="actions-btn bs-select-all btn btn-sm btn-default">' +
-      this.options.selectAllText +
-      '</button>' +
-      '<button class="actions-btn bs-deselect-all btn btn-sm btn-default">' +
-      this.options.deselectAllText +
-      '</button>' +
-      '</div>' +
-      '</div>' : '';
+      var searchbox = this.options.liveSearch ?
+          '<div class="bs-searchbox">' +
+          '<input type="text" class="form-control" autocomplete="off"' +
+          (null === this.options.liveSearchPlaceholder ? '' : ' placeholder="' + htmlEscape(this.options.liveSearchPlaceholder) + '"') + '>' +
+          '</div>'
+        : '';
+      var actionsbox = this.options.actionsBox ?
+          '<div class="bs-actionsbox">' +
+          '<div class="btn-group btn-block">' +
+          '<button class="actions-btn bs-select-all btn btn-sm btn-default">' +
+            this.options.selectAllText +
+          '</button>' +
+          '<button class="actions-btn bs-deselect-all btn btn-sm btn-default">' +
+            this.options.deselectAllText +
+          '</button>' +
+          '</div>' +
+          '</div>'
+        : '';
       var drop =
           '<div class="btn-group bootstrap-select' + multiple + inputGroup + '">' +
-          '<button type="button" class="btn dropdown-toggle selectpicker' + btnSize + '" data-toggle="dropdown"' + autofocus + '>' +
+          '<button type="button" class="btn dropdown-toggle form-control selectpicker' + btnSize + '" data-toggle="dropdown"' + autofocus + '>' +
           '<span class="filter-option pull-left"></span>&nbsp;' +
           '<span class="caret"></span>' +
           '</button>' +
@@ -292,7 +300,7 @@
             subtext = typeof $this.data('subtext') !== 'undefined' ? '<small class="muted text-muted">' + $this.data('subtext') + '</small>' : '',
             icon = typeof $this.data('icon') !== 'undefined' ? '<span class="' + that.options.iconBase + ' ' + $this.data('icon') + '"></span> ' : '',
             isDisabled = $this.is(':disabled') || $this.parent().is(':disabled'),
-            index = $this[0].index;
+            index = $this.index();
         if (icon !== '' && isDisabled) {
           icon = '<span>' + icon + '</span>';
         }
@@ -327,7 +335,7 @@
         } else if ($this.data('divider') === true) {
           _li.push(generateLI('', index, 'divider'));
         } else if ($this.data('hidden') === true) {
-          _li.push(generateLI(generateA(text, optionClass, inline), index, 'hide is-hidden'));
+          _li.push(generateLI(generateA(text, optionClass, inline), index, 'hidden is-hidden'));
         } else {
           _li.push(generateLI(generateA(text, optionClass, inline), index));
         }
@@ -406,7 +414,8 @@
         title = typeof this.options.title !== 'undefined' ? this.options.title : this.options.noneSelectedText;
       }
 
-      this.$button.attr('title', htmlEscape(title));
+      //strip all html-tags and trim the result
+      this.$button.attr('title', $.trim(title.replace(/<[^>]*>?/g, '')));
       this.$newElement.find('.filter-option').html(title);
     },
 
@@ -483,7 +492,7 @@
       if (this.options.size == 'auto') {
         var getSize = function () {
           var minHeight,
-              lisVis = that.$lis.not('.hide');
+              lisVis = that.$lis.not('.hidden');
 
           posVert();
           menuHeight = selectOffsetBot - menuExtras;
@@ -763,7 +772,7 @@
       });
 
       this.$menu.on('click', 'li.disabled a, .popover-title, .popover-title :not(.close)', function (e) {
-        if (e.target == this) {
+        if (e.currentTarget == this) {
           e.preventDefault();
           e.stopPropagation();
           if (!that.options.liveSearch) {
@@ -824,7 +833,7 @@
         that.$menu.find('.active').removeClass('active');
         if (!!that.$searchbox.val()) {
           that.$searchbox.val('');
-          that.$lis.not('.is-hidden').removeClass('hide');
+          that.$lis.not('.is-hidden').removeClass('hidden');
           if (!!no_results.parent().length) no_results.remove();
         }
         if (!that.multiple) that.$menu.find('.selected').addClass('active');
@@ -841,9 +850,9 @@
         if (that.$searchbox.val()) {
 
           if (that.options.searchAccentInsensitive) {
-            that.$lis.not('.is-hidden').removeClass('hide').find('a').not(':aicontains(' + normalizeToBase(that.$searchbox.val()) + ')').parent().addClass('hide');
+            that.$lis.not('.is-hidden').removeClass('hidden').find('a').not(':aicontains(' + normalizeToBase(that.$searchbox.val()) + ')').parent().addClass('hidden');
           } else {
-            that.$lis.not('.is-hidden').removeClass('hide').find('a').not(':icontains(' + that.$searchbox.val() + ')').parent().addClass('hide');
+            that.$lis.not('.is-hidden').removeClass('hidden').find('a').not(':icontains(' + that.$searchbox.val() + ')').parent().addClass('hidden');
           }
 
           if (!that.$menu.find('li').filter(':visible:not(.no-results)').length) {
@@ -855,7 +864,7 @@
           }
 
         } else {
-          that.$lis.not('.is-hidden').removeClass('hide');
+          that.$lis.not('.is-hidden').removeClass('hidden');
           if (!!no_results.parent().length) no_results.remove();
         }
 
@@ -1098,14 +1107,6 @@
       this.$lis = null;
       this.reloadLi();
       this.render();
-      this.setWidth();
-      this.setStyle();
-      this.checkDisabled();
-      this.liHeight();
-    },
-
-    update: function () {
-      this.reloadLi();
       this.setWidth();
       this.setStyle();
       this.checkDisabled();
